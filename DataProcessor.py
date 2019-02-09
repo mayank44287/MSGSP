@@ -28,8 +28,24 @@ class FileProcessor:
         
         for x in range(len(self.data)):
             print self.data[x]
-            
+      
+    def readParam(self):
+        file = open(self.Param_File_Path,'r')
+        for index, i in enumerate(file):
+            if 'MIS' in i:
+                n = re.findall('(\d+)',i)
+                item = int(n[0])
+                mis = float(n[1] + '.' + n[2] )
+                self.param.update({item:mis})
+            elif 'SDC' in i:
+                n = re.findall('\d+\.\d+',i)
+                sdc = float(n[0])
+           
+        for key,value in self.param.items():
+            print(key,value)
+        print(sdc)
 
 if __name__ == "__main__":
     obj = FileProcessor()
-    obj.loadData()
+    #obj.loadData()
+    obj.readParam()
