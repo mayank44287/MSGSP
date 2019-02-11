@@ -17,7 +17,7 @@ class FileProcessor:
     
     data = []
     param = {}
-    
+    L = {}
     
     def loadData(self):
         file = open(self.Data_File_Path,'r')
@@ -27,13 +27,14 @@ class FileProcessor:
             self.data.append(rowdata);
         
         for x in range(len(self.data)):
-            print self.data[x]
+            print (self.data[x])
       
     def readParam(self):
         file = open(self.Param_File_Path,'r')
         for index, i in enumerate(file):
             if 'MIS' in i:
                 n = re.findall('(\d+)',i)
+                
                 item = int(n[0])
                 mis = float(n[1] + '.' + n[2] )
                 self.param.update({item:mis})
@@ -45,7 +46,34 @@ class FileProcessor:
             print(key,value)
         print(sdc)
 
+    
+    def countL(self): 
+        dictCount = {}
+        # initialising dictCount
+        
+        for i in self.param.keys():
+            dictCount[i] = 0
+        
+        # for all sequences in data, count occurences
+        for i in self.data:
+            for l in self.param.keys():
+                
+                for j in range(len(i)):
+                    if(l in i[j]):
+                        dictCount[l] += 1;
+                        break
+                    
+                
+        print (dictCount)
+                
+                
+
+
+
+
+
 if __name__ == "__main__":
     obj = FileProcessor()
-    #obj.loadData()
+    obj.loadData()
     obj.readParam()
+    obj.countL()
