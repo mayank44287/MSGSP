@@ -1,0 +1,548 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb  7 18:03:02 2019
+
+@author: mayankraj
+"""
+
+import re;
+from collections import defaultdict
+import copy
+import sys
+import logging
+
+class FileProcessor:
+    """takes in the input data, i.e the data file, parameter file and processe
+    it to by readable by algorithm"""
+    
+    data = []
+    param = {}
+    #L = {}
+    n = 0
+    sdc = 0
+    l1_count = {}
+    DEBUG = False
+    
+    """Data_File_Path = " "
+    Param_File_Path = " "
+    Output_File_Path = " "
+    """
+    DATA_FILE = "data/data.txt"
+    PARAM_FILE = "data/para.txt" 
+    OUTPUT_FILE = "data/out.txt"
+    
+    def __init__(self,Data_File_Path, Param_File_Path, Output_File_Path, debug = False):
+        self.DATA_FILE = Data_File_Path
+        self.PARAM_FILE = Param_File_Path
+        self.OUTPUT_FILE = Output_File_Path
+        self.DEBUG = debug
+    
+    def loadData(self):
+        """file1 = open(self.Data_File_Path,'r')
+        for rows in file1:
+            rows = rows.strip()[1:-1]
+            rowdata = [[int(j) for j in re.split(',| ', s) if j != ''] for s in re.split('}{', rows[1:-1])]
+            self.data.append(rowdata);
+        
+           
+        #return self.data
+      
+    #def readParam(self):
+        file2 = open(self.Param_File_Path,'r')
+        for index, i in enumerate(file2):
+            if 'MIS' in i:
+                n = re.findall('(\d+)',i)
+                
+                item = int(n[0])
+                mis = float(n[1] + '.' + n[2] )
+                self.param.update({item:mis})
+            elif 'SDC' in i:
+                n = re.findall('\d+\.\d+',i)
+                self.sdc = float(n[0])
+           
+        #for key,value in self.param.items():
+            #print(key,value)
+        #print(self.sdc)
+        file2.close()
+        file1.close()
+        return {"Transactions" :self.data,"MIS":self.param,"sdc" : self.sdc}"""
+        
+    
+        with open(self.DATA_FILE) as f:
+            for line in f:
+                line = line.strip()[1:-1]
+                row_data = [[int(i) for i in re.split(',| ', s) if i != ''] for s in re.split(r'}{', line[1:-1])]
+                self.data.append(row_data)
+
+                if self.DEBUG:
+                    print line, "->", row_data
+
+        with open(self.PARAM_FILE) as f:
+            for line in f:
+                isMISMatch = re.match("^MIS\(\d+", line.strip())
+                if isMISMatch:
+                    item, value = int(isMISMatch.group().split('(')[1]), float(line.strip().split('=')[1].strip())
+                    self.param[item] = value
+
+                    if self.DEBUG:
+                        print item, "->", value
+                else :
+                    self.sdc = float(line.strip().split('=')[1].strip())
+                    if self.DEBUG:
+                        print "SDC ->", self.sdc
+        for i in self.data:
+            print(i)
+        
+        for key,value in self.param.items():
+            print(key,value)
+        return {"Transactions": self.data, "MIS": self.param, "sdc": self.sdc}
+
+
+    #@staticmethod
+    def printOutputFile(self, output):
+        
+        if not output:
+            print("Empty")
+            return
+        
+        File = open(self.OUTPUT_FILE,'w+')
+        for x in range(max(output.keys())):
+            
+            print "Number of length", x+1, "sequential patterns:", len(output[x+1])
+            File.write("Number of length " + str(x+1) + " sequential patterns: " + str(len(output[x+1])) + "\n")
+            
+            for j in output[x+1]:
+                    sequence = []
+                    for k in j[0]:
+                        sequence.append("{" + ", ".join([str(l) for l in k]) + "}")
+
+                    sequence1 = "<" + ", ".join(sequence) + ">"
+
+                    print "pattern:", sequence1, " count:", j[1]
+                    File.write("pattern: " + sequence1 + " count: " + str(j[1]) + "\n")
+
+            print ""
+            File.write("\n")
+    
+    @staticmethod
+    def countL(self):
+       self.l1_count = {}
+       # initialising dictCount
+       self.n = len(self.data)
+       for i in self.param.keys():
+           self.l1_count[i] = 0
+
+       # for all sequences in data, count occurences
+       for i in self.data:
+           for l in self.param.keys():
+
+               for j in range(len(i)):
+                   if(l in i[j]):
+                       self.l1_count[l] += 1;
+                       break
+
+
+       print (self.l1_count)
+
+
+class Utility:
+    
+    @staticmethod
+    def getItems(transactions):
+        
+        items = {}
+         
+        for x in transactions:
+            for y in x:
+                for item in y:
+                    if items.has_key(item):
+                        pass
+                    else:
+                        items[item] = True
+        it = sorted(items.keys())
+        """for i in it:
+            print(i)"""
+        return it
+    @staticmethod
+    def sortMis(param):
+        
+        
+        MS = sorted(param.keys(),key = param.get)
+        return MS
+    
+    @staticmethod
+    def isSubSet(subseq, supseq):
+        if len(list(set(subseq))) != len(subseq):
+            return False
+        for x in subseq:
+            if x not in supseq:
+                return False
+            
+        return True
+    
+    @staticmethod
+    def isSubSeq(subseq, supseq):
+        temp = {}
+        next = 0
+        for x in subseq:
+            flag = False
+            y = next
+            while y < len(supseq):#for y in range(len(supseq)):    
+                if temp.has_key(y):
+                    pass
+                else:
+                    if Utility.isSubSet(x, supseq[y]):
+                        temp[y] = True
+                        flag = True
+                        next = y + 1
+                        break
+                y += 1
+            if not flag:
+                return False
+        
+        return True
+     
+    @staticmethod  
+    def getItemSupportCount(M , data):
+        
+        items = [[[i]] for i in M]
+        
+        return Utility.getSupportCount(items, data)
+    
+    @staticmethod
+    def getSupportCount(items , data):
+        support = [0]*len(items)
+        
+        for x in range(len(items)):
+            count = 0
+            for y in data:
+                if Utility.isSubSeq(items[x], y):
+                    count += 1
+            support[x] = count
+                
+        return support
+        
+    
+    @staticmethod
+    def lenSequence(seq):
+        
+        length = 0
+        
+        for i in seq:
+            length += len(i)
+            
+        return length
+    
+    @staticmethod
+    def removeItemToCompareSequence(sequence, position):
+        
+        seqC = copy.deepcopy(sequence)
+        
+        length = Utility.lenSequence(seqC)
+        if position < 0 or position >= length:
+            return []
+        
+        n = 0
+        for x in seqC:
+            if len(x) + n <= position:
+                n +=len(x)
+            else:
+                del x[position - n]
+                break
+            
+        return [x for x in seqC if len(x) > 0]
+    
+    @staticmethod
+    def getItem(seq, position):
+        
+        length = Utility.lenSequence(seq)
+
+        if position < 0 or position >= length:
+            return None
+
+        n = 0
+        for x in seq:
+            if n + len(x) <= position:
+                n += len(x)
+            else:
+                return x[position - n]
+
+        return None
+    
+    
+   
+
+class MSGSP:
+     
+    Transactions = []
+    MIS = []
+    sdc = 1.0
+    
+    
+    def __init__(self, t,mis,sdc,logLevel=logging.WARNING):
+        self.Transactions = t
+        self.MIS = mis
+        self.sdc = sdc
+        
+    
+    def initialPass(self):
+        
+        X = Utility.getItems(self.Transactions)
+        X.sort(key = lambda item: self.MIS[item])
+        logging.info("X:%s", X)
+        #print(X)
+        
+        support = Utility.getItemSupportCount(X, self.Transactions)
+        logging.info('SUP: %s', support)
+        L = [(X[i], support[i]) for i in range(len(X))]
+        
+        F1 = [l for l in L if float(l[1])/len(self.Transactions) >= self.MIS[l[0]]]
+        F = [ [[f[0]]] for f in F1]
+        print("L :")
+        print(L)
+        
+        logging.info('F1: %s length: %s', F1, len(F1))
+        #print("F1")
+        #print(F1)
+        
+        Fk, Ck= F1, []
+        k = 2
+        while(Fk):
+            if k == 2:
+                
+                Ck = self.l2CandidateGen(L)
+                
+            else:
+                Ck = self.GenCandGen(Fk)
+                
+            
+            Sup = Utility.getSupportCount(Ck,self.Transactions)
+            Fk = [Ck[i] for i in range(len(Ck)) if float(Sup[i])/len(self.Transactions) >= self.MinMis(Ck[i])]
+            F.extend(Fk)
+            
+            k += 1
+            
+        return F
+        
+   
+    
+    
+        
+    
+    def MinMis(self,sequence):
+        minimumMIS = sys.maxint
+        for x in sequence:
+            for y in x:
+                if self.MIS[y] < minimumMIS:
+                    minimumMIS = self.MIS[y]
+    
+        return minimumMIS
+    
+    def LowestMis(self,sequence):
+        minMis = sys.maxint
+        flag = True
+        for x in sequence:
+            for y in x:
+                if self.MIS[y] < minMis:
+                    minMis = self.MIS[y]
+                    flag = True
+                elif minMis == self.MIS[y]:
+                    flag = False
+        
+        if flag:
+            return minMis
+        else:
+            return sys.maxint
+    
+    
+    def MakeSequence1(self, seq1, seq2):
+        
+        candidate = []
+        if len(seq2[-1]) == 1:
+            s1c = copy.deepcopy(seq1)
+            s1c.append(seq2[-1])
+            candidate.append(s1c)
+            
+            if Utility.lenSequence(seq1) == 2 and len(seq1) == 2 and seq2[-1][-1] > seq1[-1][-1]:
+                s1c = copy.deepcopy(seq1)
+                s1c[-1].append(seq2[-1][-1])
+                candidate.append(s1c)
+                
+        elif (Utility.lenSequence(seq1) == 2 and len(seq1) == 1 and seq2[-1][-1] > seq1[-1][-1]) or Utility.lenSequence(seq1) > 2:
+            
+            s1c = copy.deepcopy(seq1)
+            s1c[-1].append(seq2[-1][-1])
+            candidate.append(s1c)
+            
+        return candidate
+    
+    def MakeSequence2(self,seq1,seq2):
+        
+        candidate = []
+        if len(seq1[0]) == 1:
+                s2copy = copy.deepcopy(seq2)
+                s2copy.insert(0, seq1[0])
+                candidate.append(s2copy)
+
+                if Utility.lenSequence(seq2) == 2 and len(seq2) == 2 and seq1[0][0] > seq2[0][0]:
+                    s2copy1 = copy.deepcopy(seq2)
+                    s2copy1[0].insert(0, seq1[0][0])
+                    candidate.append(s2copy1)
+
+        elif (Utility.lenSequence(seq2) == 2 and len(seq2) == 1 and seq1[0][0] > seq2[0][0]) or Utility.lenSequence(seq2) > 2:
+            
+            s2copy1 = copy.deepcopy(seq2)
+            s2copy1[0].insert(0, seq1[0][0])
+            candidate.append(s2copy1)
+            
+        return candidate
+    
+    def MakeSequence3(self, seq1, seq2):
+        
+        candidate = []
+        if len(seq2[-1]) == 1:
+                s1copy = copy.deepcopy(seq1)
+                s1copy.append(seq2[-1])
+                candidate.append(s1copy)
+        else:
+            s1copy = copy.deepcopy(seq1)
+            s1copy[-1].append(seq2[-1][-1])
+            candidate.append(s1copy)
+            
+        return candidate
+      
+        
+            
+    
+    def GenCandGen(self,F):
+        
+        candSeq = []
+        for sequence1 in F:
+            for sequence2 in F:
+                if self.MIS[sequence1[0][0]] == self.LowestMis(sequence1):
+                    if(Utility.removeItemToCompareSequence(sequence1,1) == Utility.removeItemToCompareSequence(sequence2, Utility.lenSequence(sequence2) -1)) and (self.MIS[sequence2[-1][-1]] >= self.MIS[sequence1[0][0]]):
+                        newCandidate1 = self.MakeSequence1(sequence1, sequence2)
+                        for x in newCandidate1:
+                            candSeq.append(x)
+                elif self.MIS[sequence2[-1][-1]] == self.LowestMis(sequence2):
+                    if (Utility.removeItemToCompareSequence(sequence2, Utility.lenSequence(sequence2)-2) == Utility.removeItemToCompareSequence(sequence1, 0)) and (self.MIS[sequence1[0][0]] > self.MIS[sequence2[-1][-1]]):
+                        newCandidate2 = self.MakeSequence2(sequence1, sequence2)
+                        for x in newCandidate2:
+                            candSeq.append(x)
+                else:
+                    if Utility.removeItemToCompareSequence(sequence1, 0) == Utility.removeItemToCompareSequence(sequence2, Utility.lenSequence(sequence2)-1):
+                        newCandidate3 = self.MakeSequence3(sequence1, sequence2)
+                        for x in newCandidate3:
+                            candSeq.append(x)
+                            
+        return[x for x in candSeq if self.Pruning(x) is False]
+        
+        
+    def Pruning(self,sequence):
+        minimumMIS = self.LowestMis(sequence)
+        length = Utility.lenSequence(sequence)
+        #n = 0
+        for x in range(length):
+            y = Utility.getItem(sequence, x)
+            if self.MIS[y] == minimumMIS:
+                continue
+            prevSubSeq = Utility.removeItemToCompareSequence(sequence,x)           #k-1 subsequences
+            n = 0
+            for i in self.Transactions:
+                if Utility.isSubSeq(prevSubSeq,i):
+                    n += 1
+                    
+            if float(n) / len(self.Transactions) < self.MinMis(prevSubSeq):
+                return True
+        
+        return False
+            
+    
+    
+
+    
+    
+    
+    def l2CandidateGen(self,L):
+        
+        C2 = []
+        #j = 0
+        #i = 0
+        
+        for i in range(len(L)):
+        #while (i <len(L)):
+           sup_l = float(L[i][1])/len(self.Transactions)
+           if (sup_l  >= self.MIS[L[i][0]]):
+
+               """tempList = []
+               tempList.append(L[i])
+               tempList.append(L[i])
+               C2.append(tempList)"""
+               
+               
+
+
+               j = i #+ 1
+               while (j < len(L)):
+                   # the following line is different from L generation
+                   sup_h = float(L[j][1])/len(self.Transactions)
+                   if (sup_h >= self.MIS[L[i][0]] and abs(sup_l - sup_h)<= self.sdc):
+                     
+                       if L[i][0] < L[j][0]:
+                           C2.append([[L[i][0], L[j][0]]])
+                           
+                       else:
+                           C2.append([[L[j][0],L[i][0]]])
+                           
+                       C2.append([[L[i][0]], [L[j][0]]])
+                       
+                       if L[i][0] != L[j][0]:
+                           C2.append([[L[j][0]],[L[i][0]]])
+                           
+                           
+                    
+
+
+                   j = j + 1
+                   #print(j)
+           #i = i + 1
+           
+        
+        return C2
+
+
+
+
+
+if __name__ == "__main__":
+    
+    Data_File_Path = "DataAndParameters/data2.txt"
+    Param_File_Path = "DataAndParameters/para2.txt"
+    Output_File_Path = "DataAndParameters/output.txt"
+    
+    obj = FileProcessor(Data_File_Path,Param_File_Path, Output_File_Path,False)
+    #Trans = obj.loadData()
+    #MS = obj.readParam()
+    inputD = obj.loadData()
+    
+    #M.sort(key = lambda item: self.param[item])
+    run = MSGSP(inputD["Transactions"], inputD["MIS"], inputD["sdc"], logging.INFO)
+    output = run.initialPass()
+    """for x in range(len(run.Transactions)):
+            print (run.Transactions[x])
+    
+    for x in range(len(run.MIS)):
+            print (run.MIS[x])"""
+    
+    outDict = defaultdict(list)
+    
+    for seq in output:
+        count = 0
+        for d in inputD["Transactions"]:
+            if Utility.isSubSeq(seq, d):
+                count += 1
+        outDict[Utility.lenSequence(seq)].append((seq, count))
+
+    obj.printOutputFile(outDict)
+    
